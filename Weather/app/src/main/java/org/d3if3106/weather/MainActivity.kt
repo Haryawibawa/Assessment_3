@@ -1,9 +1,16 @@
 package org.d3if3106.weather
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.core.app.NotificationCompat
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
@@ -19,6 +26,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val lat=intent.getStringExtra("lat")
         var long=intent.getStringExtra("long")
+        createNotificationChannel()
 
         window.statusBarColor= Color.parseColor("#1383C3")
         getJsonData(lat,long)
@@ -40,6 +48,20 @@ class MainActivity : AppCompatActivity() {
 
 
         queue.add(jsonRequest)
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelId = "prodman123"
+            val channelName = "Perubahan Cuaca"
+            val channelDescription = "Weather Application"
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel(channelId, channelName, importance)
+            channel.description = channelDescription
+
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
     }
 
     private fun setValues(response:JSONObject){
@@ -64,6 +86,27 @@ class MainActivity : AppCompatActivity() {
         humidity.text=response.getJSONObject("main").getString("humidity")+"%"
         wind.text=response.getJSONObject("wind").getString("speed")
         degree.text="Degree : "+response.getJSONObject("wind").getString("deg")+"°"
+
+
+
+        val notificationId = 123
+        val channelId = "prodman123"
+        val channelName = "Perubahan Cuaca"
+        val notificationText = "Temperatur hari ini ${tempr} °C"
+
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle(channelName)
+            .setContentText(notificationText)
+            .setSmallIcon(R.drawable.baseline_cloud_24)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        val notificationManager = this.getSystemService(NotificationManager::class.java)
+        notificationManager.notify(notificationId, notification)
 //        gust.text="Gust : "+response.getJSONObject("wind").getString("gust")
     }
 }
